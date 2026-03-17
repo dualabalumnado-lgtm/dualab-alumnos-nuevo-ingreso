@@ -34,5 +34,12 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
+  
+  adminer:
+    image: adminer
+    container_name: dualab_adminer
+    ports:
+      - "8082:8080"
+
 volumes:
   mysql_data:
