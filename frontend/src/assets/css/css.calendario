@@ -1,0 +1,39 @@
+.fc {
+  border-radius: 12px;
+}
+
+/* Header */
+.fc-toolbar-title {
+  color: #1F6935;
+  font-weight: bold;
+}
+
+/* Botones */
+.fc-button {
+  background: #59BF38 !important;
+  border: none !important;
+}
+
+.fc-button:hover {
+  background: #1F6935 !important;
+}
+
+/* Eventos */
+.fc-event {
+  background: linear-gradient(
+    160deg,
+    #1F6935,
+    #59BF38,
+    #AEE565
+  );
+  border: none;
+  color: black;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+/* Hover pro */
+.fc-event:hover {
+  transform: scale(1.03);
+  transition: 0.2s;
+}
