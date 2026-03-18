@@ -20,25 +20,37 @@ const calendarOptions = ref({
 
   editable: true,
 
-  dateClick: async (info) => {
-  const titulo = prompt('Título del evento')
-
-  if (titulo) {
-    await fetch('http://localhost:8000/api/eventos', {
-      method: 'POST',
+  eventDrop: async (info) => {
+    await fetch(`http://localhost:8000/api/eventos/${info.event.id}`, {
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        titulo: titulo,
-        inicio: info.dateStr
+        inicio: info.event.startStr
       })
     })
+  },
 
-    //recargar eventos SIN recargar página
-    info.view.calendar.refetchEvents()
+  dateClick: async (info) => {
+    const titulo = prompt('Título del evento')
+
+    if (titulo) {
+      await fetch('http://localhost:8000/api/eventos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          titulo: titulo,
+          inicio: info.dateStr
+        })
+      })
+
+      // recargar eventos SIN recargar página
+      info.view.calendar.refetchEvents()
+    }
   }
-}
 })
 </script>
 
