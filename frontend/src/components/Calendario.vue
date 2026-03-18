@@ -32,6 +32,25 @@ const calendarOptions = ref({
     })
   },
 
+  eventClick: async (info) => {
+  const nuevoTitulo = prompt('Editar título', info.event.title)
+
+  if (nuevoTitulo) {
+    await fetch(`http://localhost:8000/api/eventos/${info.event.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        titulo: nuevoTitulo,
+        inicio: info.event.startStr
+      })
+    })
+
+    info.view.calendar.refetchEvents()
+  }
+},
+
   dateClick: async (info) => {
     const titulo = prompt('Título del evento')
 
