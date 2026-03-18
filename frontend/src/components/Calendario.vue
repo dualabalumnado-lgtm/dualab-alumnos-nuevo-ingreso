@@ -21,30 +21,24 @@ const calendarOptions = ref({
   editable: true,
 
   dateClick: async (info) => {
-    const titulo = prompt('Título del evento')
+  const titulo = prompt('Título del evento')
 
-    if (!titulo) return
-
-    try {
-      await fetch('http://localhost:8000/api/eventos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          titulo: titulo,
-          inicio: info.dateStr
-        })
+  if (titulo) {
+    await fetch('http://localhost:8000/api/eventos', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        titulo: titulo,
+        inicio: info.dateStr
       })
+    })
 
-      // 🔥 refresco limpio (sin recargar página)
-      info.view.calendar.refetchEvents()
-
-    } catch (error) {
-      console.error(error)
-      alert('Error al crear el evento')
-    }
+    //recargar eventos SIN recargar página
+    info.view.calendar.refetchEvents()
   }
+}
 })
 </script>
 

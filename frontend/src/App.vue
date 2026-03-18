@@ -32,5 +32,5 @@
 </template>
 
 <script setup>
-import Calendar from './components/Calendar.vue'
+import Calendar from './components/Calendario.vue'
 </script>
