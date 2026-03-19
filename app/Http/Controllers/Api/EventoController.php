@@ -13,39 +13,50 @@ class EventoController extends Controller
         return Evento::all()->map(function ($evento) {
             return [
                 'id' => $evento->id,
-                'title' => $evento->titulo . ($evento->descripcion ? ' - ' . $evento->descripcion : ''),
+                'title' => $evento->titulo,
                 'start' => $evento->inicio,
-                'descripcion' => $request->descripcion,
+                'allDay' => true,
+                'descripcion' => $evento->descripcion,
                 'backgroundColor' => $evento->color ?? '#59BF38',
                 'borderColor' => $evento->color ?? '#1F6935',
                 'textColor' => '#ffffff',
-                
             ];
         });
     }
 
     public function store(Request $request)
     {
+        $request->validate([
+            'titulo' => 'required|string|max:255',
+            'inicio' => 'required|date',
+        ]);
+    
         return Evento::create([
             'titulo' => $request->titulo,
             'inicio' => $request->inicio,
             'color' => $request->color,
-            
+            'descripcion' => $request->descripcion,
         ]);
     }
 
     public function update(Request $request, $id)
-    {
-        $evento = Evento::findOrFail($id);
+{
+    $request->validate([
+        'titulo' => 'required|string|max:255',
+        'inicio' => 'required|date',
+    ]);
 
-        $evento->update([
-            'titulo' => $request->titulo ?? $evento->titulo,
-            'inicio' => $request->inicio ?? $evento->inicio,
-            'color' => $request->color,
-        ]);
+    $evento = Evento::findOrFail($id);
 
-        return $evento;
-    }
+    $evento->update([
+        'titulo' => $request->titulo ?? $evento->titulo,
+        'inicio' => $request->inicio ?? $evento->inicio,
+        'color' => $request->color ?? $evento->color,
+        'descripcion' => $request->descripcion ?? $evento->descripcion,
+    ]);
+
+    return $evento;
+}
 
     public function destroy($id)
     {

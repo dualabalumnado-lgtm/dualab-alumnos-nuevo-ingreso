@@ -5,75 +5,66 @@
 
   <!-- MODAL -->
   <div v-if="showModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-  <div class="bg-white rounded-2xl p-6 w-96 shadow-xl">
+    <div class="bg-white rounded-2xl p-6 w-96 shadow-xl">
 
-    <!-- título -->
-    <input
-      ref="inputTitulo"
-      v-model="titulo"
-      placeholder="Añadir título"
-      class="w-full text-lg font-semibold border-b mb-4 outline-none text-center"
-      @keyup.enter="guardarEvento"
-    />
+      <!-- título -->
+      <input
+        v-model="titulo"
+        placeholder="Título del evento *"
+        class="w-full text-xl font-bold border-b-2 mb-2 outline-none text-center border-gray-300 focus:border-green-500"
+      />
 
-    <!-- fecha -->
-    <input
-      v-model="fechaSeleccionada"
-      type="date"
-      class="w-full border rounded-lg p-2 mb-3"
-    />
+      <!-- fecha -->
+      <input
+        v-model="fechaSeleccionada"
+        type="date"
+        class="w-full border rounded-lg p-2 mb-3"
+      />
 
-    <!-- hora -->
-    <input
-      v-model="hora"
-      type="time"
-      class="w-full border rounded-lg p-2 mb-3"
-    />
+      <!-- descripción -->
+      <textarea
+        v-model="descripcion"
+        placeholder="Descripción (opcional)"
+        class="w-full border rounded-lg p-2 mb-4 text-sm text-gray-600"
+      ></textarea>
 
-    <!-- descripción -->
-    <textarea
-      v-model="descripcion"
-      placeholder="Añadir descripción"
-      class="w-full border rounded-lg p-2 mb-4"
-    ></textarea>
+      <!-- colores -->
+      <div class="flex gap-2 mb-4 justify-center">
+        <div
+          v-for="c in colores"
+          :key="c"
+          :style="{ background: c }"
+          class="w-6 h-6 rounded-full cursor-pointer border-2"
+          :class="color === c ? 'border-black' : 'border-transparent'"
+          @click="color = c"
+        ></div>
+      </div>
 
-    <!-- colores -->
-    <div class="flex gap-2 mb-4 justify-center">
-      <div
-        v-for="c in colores"
-        :key="c"
-        :style="{ background: c }"
-        class="w-6 h-6 rounded-full cursor-pointer border-2"
-        :class="color === c ? 'border-black' : 'border-transparent'"
-        @click="color = c"
-      ></div>
-    </div>
+      <!-- botones -->
+      <div class="flex justify-between items-center">
 
-    <!-- botones -->
-    <div class="flex justify-between items-center">
-
-      <button
-        v-if="modoEdicion"
-        @click="eliminarEvento"
-        class="px-3 py-1 bg-red-500 text-white rounded"
-      >
-        Eliminar
-      </button>
-
-      <div class="flex gap-2 ml-auto">
-        <button @click="cerrarModal" class="px-3 py-1 bg-gray-200 rounded">
-          Cancelar
+        <button
+          v-if="modoEdicion"
+          @click="eliminarEvento"
+          class="px-3 py-1 bg-red-500 text-white rounded"
+        >
+          Eliminar
         </button>
 
-        <button @click="guardarEvento" class="px-3 py-1 bg-green-500 text-white rounded">
-          Guardar
-        </button>
+        <div class="flex gap-2 ml-auto">
+          <button @click="cerrarModal" class="px-3 py-1 bg-gray-200 rounded">
+            Cancelar
+          </button>
+
+          <button @click="guardarEvento" class="px-3 py-1 bg-green-500 text-white rounded">
+            Guardar
+          </button>
+        </div>
+
       </div>
 
     </div>
-
   </div>
-</div>
 </template>
 
 <script setup>
@@ -84,15 +75,14 @@ import interactionPlugin from '@fullcalendar/interaction'
 
 const calendarRef = ref(null)
 
-// 🔥 estado
+// 🧠 ESTADO
 const showModal = ref(false)
 const titulo = ref('')
 const color = ref('#59BF38')
-const fechaSeleccionada = ref(null)
+const fechaSeleccionada = ref('')
 const modoEdicion = ref(false)
 const eventoId = ref(null)
 const descripcion = ref('')
-const hora = ref('')
 
 const colores = [
   '#59BF38',
@@ -102,20 +92,22 @@ const colores = [
   '#C6D8C6'
 ]
 
-//  helpers
+// 🔹 Reset modal
 const cerrarModal = () => {
   showModal.value = false
   modoEdicion.value = false
   titulo.value = ''
+  descripcion.value = ''
 }
 
-//  guardar (crear + editar)
+//  GUARDAR EVENTO
 const guardarEvento = async () => {
-  if (!titulo.value) return
-
-  const fechaFinal = hora.value
-  ? `${fechaSeleccionada.value}T${hora.value}`
-  : fechaSeleccionada.value
+  console.log('titulo:', titulo.value)
+  console.log('fecha:', fechaSeleccionada.value)
+  if (!titulo.value || !fechaSeleccionada.value) {
+    alert('Faltan datos')
+    return
+  }
 
   const url = modoEdicion.value
     ? `http://localhost:8000/api/eventos/${eventoId.value}`
@@ -123,21 +115,37 @@ const guardarEvento = async () => {
 
   const method = modoEdicion.value ? 'PUT' : 'POST'
 
-  await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      titulo: titulo.value,
-      inicio: fechaSeleccionada.value,
-      color: color.value
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        titulo: titulo.value,
+        inicio: fechaSeleccionada.value, // 👈 SOLO FECHA
+        color: color.value,
+        descripcion: descripcion.value
+      })
     })
-  })
 
-  cerrarModal()
-  calendarRef.value.getApi().refetchEvents()
+    if (!res.ok) {
+      const error = await res.json()
+      console.log('ERROR:', error)
+      alert('Error al guardar')
+      return
+    }
+
+    cerrarModal()
+    calendarRef.value.getApi().refetchEvents()
+
+  } catch (error) {
+    console.error('Error fetch:', error)
+  }
 }
 
-//  eliminar
+// ELIMINAR
 const eliminarEvento = async () => {
   await fetch(`http://localhost:8000/api/eventos/${eventoId.value}`, {
     method: 'DELETE'
@@ -147,47 +155,66 @@ const eliminarEvento = async () => {
   calendarRef.value.getApi().refetchEvents()
 }
 
-//  calendario
+// CALENDARIO
 const calendarOptions = ref({
   plugins: [dayGridPlugin, interactionPlugin],
   initialView: 'dayGridMonth',
   events: 'http://localhost:8000/api/eventos',
   editable: true,
+  displayEventTime: false, 
 
+  // mover evento
   eventDrop: async (info) => {
     await fetch(`http://localhost:8000/api/eventos/${info.event.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        inicio: info.event.startStr
+        inicio: info.event.startStr.split('T')[0]
       })
     })
   },
 
+  // editar evento
   eventClick: (info) => {
-    modoEdicion.value = true
-    showModal.value = true
+  modoEdicion.value = true
+  showModal.value = true
 
-    titulo.value = info.event.title
-    color.value = info.event.backgroundColor
-    fechaSeleccionada.value = info.event.startStr
-    eventoId.value = info.event.id
-  },
+  titulo.value = info.event.title
+  descripcion.value = info.event.extendedProps.descripcion || ''
+  color.value = info.event.backgroundColor
 
+  //  FIX SEGURO
+  const fecha = info.event.start
+    ? info.event.start.toISOString().split('T')[0]
+    : ''
+
+  fechaSeleccionada.value = fecha
+
+  eventoId.value = info.event.id
+},
+
+  // nuevo evento
   dateClick: (info) => {
-    modoEdicion.value = false
-    showModal.value = true
+  modoEdicion.value = false
+  showModal.value = true
 
-    titulo.value = ''
-    color.value = '#59BF38'
-    fechaSeleccionada.value = info.dateStr
-  }
+  titulo.value = ''
+  descripcion.value = ''
+  color.value = '#59BF38'
+
+  // 👇 FIX CLAVE
+  const fecha = new Date(info.date)
+    .toISOString()
+    .split('T')[0]
+
+  fechaSeleccionada.value = fecha
+}
 })
 </script>
 
 <style scoped>
 .calendar-wrapper {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 16px;
   padding: 10px;
 }
