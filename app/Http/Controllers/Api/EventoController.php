@@ -13,8 +13,13 @@ class EventoController extends Controller
         return Evento::all()->map(function ($evento) {
             return [
                 'id' => $evento->id,
-                'title' => $evento->titulo,
+                'title' => $evento->titulo . ($evento->descripcion ? ' - ' . $evento->descripcion : ''),
                 'start' => $evento->inicio,
+                'descripcion' => $request->descripcion,
+                'backgroundColor' => $evento->color ?? '#59BF38',
+                'borderColor' => $evento->color ?? '#1F6935',
+                'textColor' => '#ffffff',
+                
             ];
         });
     }
@@ -24,6 +29,27 @@ class EventoController extends Controller
         return Evento::create([
             'titulo' => $request->titulo,
             'inicio' => $request->inicio,
+            'color' => $request->color,
+            
         ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $evento = Evento::findOrFail($id);
+
+        $evento->update([
+            'titulo' => $request->titulo ?? $evento->titulo,
+            'inicio' => $request->inicio ?? $evento->inicio,
+            'color' => $request->color,
+        ]);
+
+        return $evento;
+    }
+
+    public function destroy($id)
+    {
+        Evento::destroy($id);
+        return response()->json(['ok' => true]);
     }
 }
