@@ -1,6 +1,6 @@
 <template>
     <header class="w-full p-4 flex justify-between items-center backdrop-blur-md bg-black/20">
-      <img src="@/assets/logo_dualab.png" alt="Dualab" class="h-10" />
+        <img src="../../assets/logo_dualab.png" alt="Dualab" class="h-10" />
       <nav class="flex gap-4 text-sm font-medium">
         <RouterLink
           to="/"
