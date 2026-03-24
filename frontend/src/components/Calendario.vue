@@ -3,30 +3,30 @@
     <FullCalendar ref="calendarRef" :options="calendarOptions" />
   </div>
 
+  
   <!-- MODAL -->
-  <div v-if="showModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-    <div class="bg-white rounded-2xl p-6 w-96 shadow-xl">
+<div v-if="showModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-50"
+     @keydown.enter.prevent="guardarEvento">  
+  <div class="bg-white rounded-2xl p-6 w-96 shadow-xl">
 
-      <!-- título -->
-      <input
-        v-model="titulo"
-        placeholder="Título del evento *"
-        class="w-full text-xl font-bold border-b-2 mb-2 outline-none text-center border-gray-300 focus:border-green-500"
-      />
+    <input
+      v-model="titulo"
+      placeholder="Título del evento *"
+      class="w-full text-xl font-bold border-b-2 mb-2 outline-none text-center border-gray-300 focus:border-green-500"
+    />
 
-      <!-- fecha -->
-      <input
-        v-model="fechaSeleccionada"
-        type="date"
-        class="w-full border rounded-lg p-2 mb-3"
-      />
+    <input
+      v-model="fechaSeleccionada"
+      type="date"
+      class="w-full border rounded-lg p-2 mb-3"
+    />
 
-      <!-- descripción -->
-      <textarea
-        v-model="descripcion"
-        placeholder="Descripción (opcional)"
-        class="w-full border rounded-lg p-2 mb-4 text-sm text-gray-600"
-      ></textarea>
+    <textarea>
+      v-model="descripcion"
+      placeholder="Descripción (opcional)"
+      class="w-full border rounded-lg p-2 mb-4 text-sm text-gray-600"
+      @keydown.enter.stop  
+    </textarea>
 
       <!-- colores -->
       <div class="flex gap-2 mb-4 justify-center">
@@ -68,14 +68,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
+import { ref } from 'vue'
 
 const calendarRef = ref(null)
 
-// 🧠 ESTADO
+// ESTADO
 const showModal = ref(false)
 const titulo = ref('')
 const color = ref('#59BF38')
@@ -92,7 +92,7 @@ const colores = [
   '#C6D8C6'
 ]
 
-// 🔹 Reset modal
+// RESET MODAL
 const cerrarModal = () => {
   showModal.value = false
   modoEdicion.value = false
@@ -100,10 +100,8 @@ const cerrarModal = () => {
   descripcion.value = ''
 }
 
-//  GUARDAR EVENTO
+// GUARDAR EVENTO
 const guardarEvento = async () => {
-  console.log('titulo:', titulo.value)
-  console.log('fecha:', fechaSeleccionada.value)
   if (!titulo.value || !fechaSeleccionada.value) {
     alert('Faltan datos')
     return
@@ -112,7 +110,6 @@ const guardarEvento = async () => {
   const url = modoEdicion.value
     ? `http://localhost:8000/api/eventos/${eventoId.value}`
     : 'http://localhost:8000/api/eventos'
-
   const method = modoEdicion.value ? 'PUT' : 'POST'
 
   try {
@@ -124,27 +121,47 @@ const guardarEvento = async () => {
       },
       body: JSON.stringify({
         titulo: titulo.value,
-        inicio: fechaSeleccionada.value, // 👈 SOLO FECHA
+        inicio: fechaSeleccionada.value,
         color: color.value,
         descripcion: descripcion.value
       })
     })
 
     if (!res.ok) {
-      const error = await res.json()
-      console.log('ERROR:', error)
+      const text = await res.text()
+      console.log('ERROR:', text)
       alert('Error al guardar')
       return
     }
 
+    const data = await res.json() // 👈 guarda la respuesta del servidor
+    const calendarApi = calendarRef.value.getApi()
+
+    if (modoEdicion.value) {
+      // Busca el evento existente y actualízalo directamente
+      const eventoExistente = calendarApi.getEventById(String(eventoId.value))
+      if (eventoExistente) {
+        eventoExistente.setProp('title', titulo.value)
+        eventoExistente.setProp('color', color.value)
+        eventoExistente.setStart(fechaSeleccionada.value)
+      }
+    } else {
+      // Añade el nuevo evento directamente con el ID que devuelve el servidor
+      calendarApi.addEvent({
+        id: String(data.id),   // 👈 asegúrate que tu API devuelve el id
+        title: titulo.value,
+        start: fechaSeleccionada.value,
+        color: color.value,
+        extendedProps: { descripcion: descripcion.value }
+      })
+    }
+
     cerrarModal()
-    calendarRef.value.getApi().refetchEvents()
 
   } catch (error) {
-    console.error('Error fetch:', error)
+    console.error('FETCH ERROR:', error)
   }
 }
-
 // ELIMINAR
 const eliminarEvento = async () => {
   await fetch(`http://localhost:8000/api/eventos/${eventoId.value}`, {
@@ -152,18 +169,27 @@ const eliminarEvento = async () => {
   })
 
   cerrarModal()
-  calendarRef.value.getApi().refetchEvents()
+
+  const calendarApi = calendarRef.value.getApi()
+  calendarApi.refetchEvents()
 }
 
 // CALENDARIO
 const calendarOptions = ref({
   plugins: [dayGridPlugin, interactionPlugin],
   initialView: 'dayGridMonth',
-  events: 'http://localhost:8000/api/eventos',
-  editable: true,
-  displayEventTime: false, 
 
-  // mover evento
+  //  FUENTE DE EVENTOS (ESTABLE)
+  events: async (info, successCallback) => {
+    const res = await fetch('http://localhost:8000/api/eventos')
+    const data = await res.json()
+    successCallback(data)
+  },
+
+  editable: true,
+  displayEventTime: false,
+
+  // MOVER EVENTO
   eventDrop: async (info) => {
     await fetch(`http://localhost:8000/api/eventos/${info.event.id}`, {
       method: 'PUT',
@@ -172,43 +198,38 @@ const calendarOptions = ref({
         inicio: info.event.startStr.split('T')[0]
       })
     })
+
+    const calendarApi = calendarRef.value.getApi()
+    calendarApi.refetchEvents()
   },
 
-  // editar evento
+  // EDITAR EVENTO
   eventClick: (info) => {
-  modoEdicion.value = true
-  showModal.value = true
+    modoEdicion.value = true
+    showModal.value = true
 
-  titulo.value = info.event.title
-  descripcion.value = info.event.extendedProps.descripcion || ''
-  color.value = info.event.backgroundColor
+    titulo.value = info.event.title
+    descripcion.value = info.event.extendedProps.descripcion || ''
+    color.value = info.event.backgroundColor
 
-  //  FIX SEGURO
-  const fecha = info.event.start
-    ? info.event.start.toISOString().split('T')[0]
-    : ''
+    // ✅ FIX FECHA (IMPORTANTÍSIMO)
+    fechaSeleccionada.value = info.event.startStr
 
-  fechaSeleccionada.value = fecha
+    eventoId.value = info.event.id
+  },
 
-  eventoId.value = info.event.id
-},
-
-  // nuevo evento
+  // NUEVO EVENTO
   dateClick: (info) => {
-  modoEdicion.value = false
-  showModal.value = true
+    modoEdicion.value = false
+    showModal.value = true
 
-  titulo.value = ''
-  descripcion.value = ''
-  color.value = '#59BF38'
+    titulo.value = ''
+    descripcion.value = ''
+    color.value = '#59BF38'
 
-  // 👇 FIX CLAVE
-  const fecha = new Date(info.date)
-    .toISOString()
-    .split('T')[0]
-
-  fechaSeleccionada.value = fecha
-}
+    // ✅ FECHA CORRECTA
+    fechaSeleccionada.value = info.dateStr
+  }
 })
 </script>
 
