@@ -1,0 +1,87 @@
+/* Override FullCalendar */
+.fc {
+  font-family: 'Inter', sans-serif;
+}
+
+.fc-toolbar-title {
+  color: #1F6935;
+  font-weight: bold;
+}
+
+.fc-button {
+  background: #59BF38 !important;
+  border: none !important;
+  border-radius: 8px !important;
+}
+
+.fc-button:hover {
+  background: #1F6935 !important;
+}
+
+.fc-event {
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.fc-event:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+.fc-daygrid-day {
+  transition: background 0.2s ease;
+}
+
+.fc-daygrid-day:hover {
+  background: rgba(89, 191, 56, 0.08);
+}
+
+.fc-daygrid-block-event {
+  display: block;
+  width: 100%;
+}
+
+.fc-button {
+  background: linear-gradient(160deg, #59BF38, #1F6935) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 6px 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.fc-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.fc-toolbar-title {
+  font-size: 1.4rem;
+  color: #1F6935;
+  letter-spacing: 0.5px;
+}
+
+.calendar-wrapper {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(14px);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+}
+
+.calendar-wrapper {
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
